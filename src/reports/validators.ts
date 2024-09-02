@@ -1,10 +1,11 @@
 import type { LibraClient } from "libra-ts-sdk"
-import { allVouchersPayload, currentValidatorsPayload, eligibleValidatorsPayload, vouchersInSetPayload, vouchesGiven, vouchesReceived } from "libra-ts-sdk/src/payloads/validators"
+import { currentValidatorsPayload, eligibleValidatorsPayload, validatorBidPayload, validatorGradePayload, vouchersInSetPayload, vouchesGiven, vouchesReceived } from "libra-ts-sdk/src/payloads/validators"
 import { accountBalancePayload } from "libra-ts-sdk/src/payloads/common"
 import type { ValidatorAccount, ValidatorSet } from "../types/system"
 import fs from "fs"
 import path from "path"
 import { maybeInitClient } from "../makeClient"
+import { lookup } from "./whitepages"
 
 export class ReportValidator implements ValidatorSet {
   profiles: Map<string, ValidatorAccount>;
@@ -33,6 +34,12 @@ export class ReportValidator implements ValidatorSet {
     })
   }
 
+  populateHandles() {
+    this.profiles.forEach((p) => {
+      p.handle = lookup(p.address)
+    })
+  }
+
   async populateBalances(client: LibraClient) {
     let requests: Promise<any>[] = []
     this.profiles.forEach((p) => {
@@ -52,6 +59,27 @@ export class ReportValidator implements ValidatorSet {
     console.log(requests.length)
     await Promise.all(requests)
   }
+
+  async populateBids(client: LibraClient) {
+    let requests: Promise<any>[] = []
+    this.profiles.forEach((p) => {
+      requests.push(updateBids(client, p))
+    })
+
+    console.log(requests.length)
+    await Promise.all(requests)
+  }
+
+  async populateGrade(client: LibraClient) {
+    let requests: Promise<any>[] = []
+    this.profiles.forEach((p) => {
+      requests.push(updateGrade(client, p))
+    })
+
+    console.log(requests.length)
+    await Promise.all(requests)
+  }
+
 
   saveToJson(filePath?: string) {
     let p = path.resolve(filePath ? filePath : __dirname)
@@ -116,14 +144,42 @@ export const updateVouchers = async (client: LibraClient, profile: ValidatorAcco
   return profile
 }
 
+// get the bid value and expiry for an account
+export const updateBids = async (client: LibraClient, profile: ValidatorAccount): Promise<ValidatorAccount> => {
+
+  const bidResponse = await client.postViewFunc(validatorBidPayload(profile.address));
+
+  profile.bid_value = bidResponse[0]
+  profile.bid_expires = bidResponse[1]
+
+  return profile
+}
+
+// get the performance of the validator for total proposal, and failed proposals
+export const updateGrade = async (client: LibraClient, profile: ValidatorAccount): Promise<ValidatorAccount> => {
+
+  const gradeResponse = await client.postViewFunc(validatorGradePayload(profile.address));
+  console.log(gradeResponse)
+  if (gradeResponse) {
+    profile.grade = {
+      grade_passing: gradeResponse[0],
+      grade_accepted: gradeResponse[1],
+      grade_failed: gradeResponse[2],
+    }
+  }
+
+
+  return profile
+}
+
 export const writeTemplate = (set: ValidatorSet): string => {
   let text = ''
 
   text = text.concat('\nACTIVE VALIDATORS\n')
-  text = text.concat('account ... balance\n')
+  text = text.concat('account, handle, balance\n')
   set.profiles.forEach((p) => {
     if (p.in_val_set) {
-      text = text.concat(`${p.address.slice(0, 6)} ... ${p.balance?.total ?? 0 / 1000000}\n`)
+      text = text.concat(`${p.address}, ${p.handle},${p.balance?.total ?? 0 / 1000000}\n`)
     }
   })
 
@@ -131,7 +187,7 @@ export const writeTemplate = (set: ValidatorSet): string => {
 
   set.profiles.forEach((p) => {
     if (!p.in_val_set) {
-      text = text.concat(`${p.address.slice(0, 6)} ... ${p.balance?.total ?? 0 / 1000000}\n`)
+      text = text.concat(`${p.address}, ${p.handle},${p.balance?.total ?? 0 / 1000000}\n`)
     }
   })
 
@@ -154,28 +210,4 @@ export const readFromJson = (file: string): ReportValidator => {
   })
 
   return vs
-}
-
-
-export const cliEntry = async (file?: string) => {
-  let client = await maybeInitClient()
-
-  let report: ReportValidator;
-
-  if (file) {
-    report = readFromJson(file)
-  } else {
-    report = new ReportValidator()
-    await report.getValidators(client)
-    await report.populateBalances(client)
-    await report.populateVouchers(client)
-  }
-
-  const currentPath = process.cwd();
-  const p_json = currentPath.concat("/validators.json")
-  report.saveToJson(p_json);
-
-  const p_txt = currentPath.concat("/validators.txt")
-  report.saveToTxt(p_txt);
-
 }

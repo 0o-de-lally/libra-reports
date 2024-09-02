@@ -61,13 +61,23 @@ export interface VouchList {
   expiration: number[],
 }
 
+export interface Grade {
+  grade_passing: boolean,
+  grade_accepted: number,
+  grade_failed: number,
+}
+
 export interface ValidatorAccount {
-  address: string
-  in_val_set?: boolean
+  address: string,
+  handle?: string,
+  in_val_set?: boolean,
   active_vouchers?: string[],
   vouches_received?: VouchList,
   vouches_given?: VouchList,
-  balance?: SlowWalletBalance
+  balance?: SlowWalletBalance,
+  bid_value?: number,
+  bid_expires?: number,
+  grade?: Grade,
 }
 
 export interface ValidatorSet {

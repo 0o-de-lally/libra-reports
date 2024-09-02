@@ -1,11 +1,11 @@
-import { program } from "./src/cli.ts"
-import { cliEntry } from "./src/reports/validators.ts";
+import { program, start } from "./src/cli/init.ts"
+import { validatorCommand } from "./src/cli/validatorCommand.ts";
 
 
 const main = () => {
+  start()
   const options = program.opts();
-  cliEntry(options.data)
+  validatorCommand(options.data)
 }
-
 
 main()
