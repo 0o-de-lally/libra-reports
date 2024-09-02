@@ -1,0 +1,142 @@
+import type { LibraClient } from "libra-ts-sdk"
+import { allVouchersPayload, currentValidatorsPayload, eligibleValidatorsPayload, vouchersInSetPayload } from "libra-ts-sdk/src/payloads/validators"
+import { accountBalancePayload } from "libra-ts-sdk/src/payloads/common"
+import type { ValidatorAccount, ValidatorSet } from "../types/system"
+import fs from "fs"
+import path from "path"
+
+export class PopulateVals implements ValidatorSet {
+  profiles: Map<string, ValidatorAccount>;
+
+  constructor() {
+    this.profiles = new Map<string, ValidatorAccount>()
+  }
+
+  async getValidators(client: LibraClient) {
+    const requests = [
+      client.postViewFunc(eligibleValidatorsPayload),
+      client.postViewFunc(currentValidatorsPayload),
+    ]
+
+    const [eligible, activeSet] = await Promise.all(requests)
+
+    const eligible_validators: string[] = eligible[0]
+    const current_list: string[] = activeSet[0]
+
+    eligible_validators.forEach((a) => {
+      this.profiles.set(a, { address: a, in_val_set: false })
+    })
+    // prevent any missing state
+    current_list.forEach((a) => {
+      this.profiles.set(a, { address: a, in_val_set: true })
+    })
+  }
+
+  async populateBalances(client: LibraClient) {
+    let requests: Promise<any>[] = []
+    this.profiles.forEach((p) => {
+      requests.push(updateBalance(client, p))
+    })
+
+    console.log(requests.length)
+    await Promise.all(requests)
+  }
+
+  async populateVouchers(client: LibraClient) {
+    let requests: Promise<any>[] = []
+    this.profiles.forEach((p) => {
+      requests.push(updateVouchers(client, p))
+    })
+
+    console.log(requests.length)
+    await Promise.all(requests)
+  }
+
+  saveToJson(dir?: string) {
+    let p = path.resolve(dir ? dir : __dirname)
+    if (!fs.existsSync(p)) throw `directory ${p} does not exist`
+    p = p.concat('/validators.json')
+    let json = Object.fromEntries(this.profiles)
+    fs.writeFileSync(p, JSON.stringify(json))
+  }
+
+  // format from template file
+  saveToTxt(dir?: string) {
+    let p = path.resolve(dir ? dir : __dirname)
+    if (!fs.existsSync(p)) throw `directory ${p} does not exist`
+    p = p.concat('/validators.txt')
+
+    let out = writeTemplate(this)
+    fs.writeFileSync(p, out)
+
+  }
+}
+
+// get the current balance of the validator
+export const updateBalance = async (client: LibraClient, profile: ValidatorAccount): Promise<ValidatorAccount> => {
+  const bal_res = await client.postViewFunc(accountBalancePayload(profile.address))
+
+  console.log(bal_res);
+
+  profile.balance = {
+    unlocked: bal_res[0],
+    total: bal_res[1],
+  }
+
+  return profile
+}
+
+// get the vouches given and received for that validator
+export const updateVouchers = async (client: LibraClient, profile: ValidatorAccount): Promise<ValidatorAccount> => {
+  const requests = [
+    client.postViewFunc(allVouchersPayload(profile.address)),
+    client.postViewFunc(vouchersInSetPayload(profile.address)),
+  ]
+
+  const [buddies_res, buddies_in_set_res] = await Promise.all(requests)
+
+  profile.active_vouchers = buddies_in_set_res[0]
+  profile.all_vouchers = buddies_res[0]
+
+  return profile
+}
+
+export const writeTemplate = (set: ValidatorSet): string => {
+  let text = ''
+
+  text = text.concat('\nACTIVE VALIDATORS\n')
+  text = text.concat('account ... balance\n')
+  set.profiles.forEach((p) => {
+    if (p.in_val_set) {
+      text = text.concat(`${p.address.slice(0, 6)} ... ${p.balance?.total ?? 0 / 1000000}\n`)
+    }
+  })
+
+  text = text.concat('\nPENDING VALIDATORS\n')
+
+  set.profiles.forEach((p) => {
+    if (!p.in_val_set) {
+      text = text.concat(`${p.address.slice(0, 6)} ... ${p.balance?.total ?? 0 / 1000000}\n`)
+    }
+  })
+
+  return text
+}
+
+
+export const readFromJson = (file: string): PopulateVals => {
+  let p = path.resolve(file);
+  if (!fs.existsSync(p)) throw `file ${p} does not exist`
+
+  let str = fs.readFileSync(p).toString();
+  let json: object = JSON.parse(str);
+  console.log(json);
+  let vs = new PopulateVals()
+
+  Object.entries(json).forEach(([k, v]) => {
+
+    vs.profiles.set(k, v)
+  })
+
+  return vs
+}
