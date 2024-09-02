@@ -11,15 +11,17 @@ program
   .version('0.0.1'); // TODO get actual version
 
 program
-  .option('-t, --template <path>', 'template file to use')
+  .option('-d, --data <path>', 'path to json data to use, otherwise will query api')
   .action(opts => {
-    // let e =
-    const absolutePath = path.resolve(opts.template)
-    let e = fs.existsSync(absolutePath)
-    if (!e) {
-      throw "file does not exist"
+    if (opts.data) {
+      const absolutePath = path.resolve(opts.data)
+      let e = fs.existsSync(absolutePath)
+      if (!e) {
+        throw "file does not exist"
+      }
+      opts.data = absolutePath
     }
-    opts.template = absolutePath
+
   })
 
 program.parse();

@@ -1,4 +1,0 @@
-
-{{#each validators }}
-{{this}}
-{{/each}}

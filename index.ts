@@ -1,9 +1,11 @@
 import { program } from "./src/cli.ts"
-import { ValReport } from "./src/validator.ts";
+import { cliEntry } from "./src/reports/validators.ts";
 
 
-const options = program.opts();
+const main = () => {
+  const options = program.opts();
+  cliEntry(options.data)
+}
 
-let vReport = new ValReport();
 
-await vReport.formatReport(options.template)
+main()

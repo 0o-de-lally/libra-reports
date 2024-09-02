@@ -1,6 +1,6 @@
 
 import { test } from "bun:test";
-import { PopulateVals, readFromJson } from "../src/reports/validators";
+import { ReportValidator, readFromJson } from "../src/reports/validators";
 import { maybeInitClient } from "../src/makeClient";
 import path from "path";
 
@@ -8,7 +8,7 @@ import path from "path";
 test("can populate validators", async () => {
   let client = await maybeInitClient()
 
-  let pv = new PopulateVals()
+  let pv = new ReportValidator()
 
   await pv.getValidators(client)
   await pv.populateBalances(client)

@@ -4,8 +4,9 @@ import { accountBalancePayload } from "libra-ts-sdk/src/payloads/common"
 import type { ValidatorAccount, ValidatorSet } from "../types/system"
 import fs from "fs"
 import path from "path"
+import { maybeInitClient } from "../makeClient"
 
-export class PopulateVals implements ValidatorSet {
+export class ReportValidator implements ValidatorSet {
   profiles: Map<string, ValidatorAccount>;
 
   constructor() {
@@ -52,19 +53,25 @@ export class PopulateVals implements ValidatorSet {
     await Promise.all(requests)
   }
 
-  saveToJson(dir?: string) {
-    let p = path.resolve(dir ? dir : __dirname)
-    if (!fs.existsSync(p)) throw `directory ${p} does not exist`
-    p = p.concat('/validators.json')
+  saveToJson(filePath?: string) {
+    let p = path.resolve(filePath ? filePath : __dirname)
+    // if (!fs.existsSync(p)) throw `directory ${p} does not exist`
+    if (!filePath) {
+      p = p.concat('/validators.json')
+    }
+
     let json = Object.fromEntries(this.profiles)
     fs.writeFileSync(p, JSON.stringify(json))
   }
 
   // format from template file
-  saveToTxt(dir?: string) {
-    let p = path.resolve(dir ? dir : __dirname)
-    if (!fs.existsSync(p)) throw `directory ${p} does not exist`
-    p = p.concat('/validators.txt')
+  saveToTxt(filePath?: string) {
+
+    let p = path.resolve(filePath ? filePath : __dirname)
+
+    if (!filePath) {
+      p = p.concat('/validators.txt')
+    }
 
     let out = writeTemplate(this)
     fs.writeFileSync(p, out)
@@ -124,14 +131,14 @@ export const writeTemplate = (set: ValidatorSet): string => {
 }
 
 
-export const readFromJson = (file: string): PopulateVals => {
+export const readFromJson = (file: string): ReportValidator => {
   let p = path.resolve(file);
   if (!fs.existsSync(p)) throw `file ${p} does not exist`
 
   let str = fs.readFileSync(p).toString();
   let json: object = JSON.parse(str);
   console.log(json);
-  let vs = new PopulateVals()
+  let vs = new ReportValidator()
 
   Object.entries(json).forEach(([k, v]) => {
 
@@ -139,4 +146,28 @@ export const readFromJson = (file: string): PopulateVals => {
   })
 
   return vs
+}
+
+
+export const cliEntry = async (file?: string) => {
+  let client = await maybeInitClient()
+
+  let report: ReportValidator;
+
+  if (file) {
+    report = readFromJson(file)
+  } else {
+    report = new ReportValidator()
+    await report.getValidators(client)
+    await report.populateBalances(client)
+    await report.populateVouchers(client)
+  }
+
+  const currentPath = process.cwd();
+  const p_json = currentPath.concat("/validators.json")
+  report.saveToJson(p_json);
+
+  const p_txt = currentPath.concat("/validators.txt")
+  report.saveToTxt(p_txt);
+
 }
