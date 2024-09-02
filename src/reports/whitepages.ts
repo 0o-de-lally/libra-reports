@@ -40,7 +40,7 @@ export const WHITEPAGES = [
   },
   {
     address: "d19a9e5149ab0038f3563caf6b3e7063dca5bfe9dc37cb7f7194806ceaa4f5c4",
-    handle: "unknown"
+    handle: "0xslipk"
   },
   {
     address: "e3d049469498319fe30b9aa3ac95d72be4c0f0eb8b436866e2e0b33334fc082a",
@@ -120,7 +120,7 @@ export const WHITEPAGES = [
   },
   {
     address: "fdcf0ef094b962fb35997f4e2bcd4f27533b567bf8518f5b4f9400f47742be9b",
-    handle: "lemonium9962"
+    handle: "lemonium"
   },
   {
     address: "744185aebd902421992147559f35eb937058ac74116fd6d1d6bc93ab95805aea",
@@ -156,7 +156,7 @@ export const WHITEPAGES = [
   },
   {
     address: "77f2650cd59335a8b03f875b43376f26",
-    handle: "hemulin v7"
+    handle: "hemulin"
   },
   {
     address: "6ed9621b48683455219bd8d9db54210304ac1a5fd7c578d358e8e3202d82803a",
@@ -248,7 +248,7 @@ export const WHITEPAGES = [
   },
   {
     address: "ca6bf512e1ca96ed2a6ef5b74bb8ba5daca689e8b314c4414440ebeb5b82fdf2",
-    handle: "aaronwhite9527"
+    handle: "aaronwhite"
   },
   {
     address: "aa7b724a51a8bd8e55208fef969209b3",
