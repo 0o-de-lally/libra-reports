@@ -5,18 +5,13 @@ import { readFromJson, ReportValidator } from "../reports/validators";
 export const validatorCommand = async (file?: string) => {
   let client = await maybeInitClient()
 
-  let report: ReportValidator;
+  let report = new ReportValidator();
 
   if (file) {
     report = readFromJson(file)
   } else {
-    report = new ReportValidator()
-    await report.getValidators(client)
-    await report.populateBalances(client)
-    await report.populateVouchers(client)
+    await report.populateAll(client)
   }
-
-  report.populateHandles()
 
   const currentPath = process.cwd();
   const p_json = currentPath.concat("/validators.json")

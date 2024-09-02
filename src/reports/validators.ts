@@ -4,7 +4,6 @@ import { accountBalancePayload } from "libra-ts-sdk/src/payloads/common"
 import type { ValidatorAccount, ValidatorSet } from "../types/system"
 import fs from "fs"
 import path from "path"
-import { maybeInitClient } from "../makeClient"
 import { lookup } from "./whitepages"
 
 export class ReportValidator implements ValidatorSet {
@@ -12,6 +11,22 @@ export class ReportValidator implements ValidatorSet {
 
   constructor() {
     this.profiles = new Map<string, ValidatorAccount>()
+  }
+
+  async populateAll(client: LibraClient): Promise<ReportValidator> {
+    await this.getValidators(client);
+
+    // these requests do not need a specific order
+    const requests = [
+      this.populateHandles(),
+      this.populateBalances(client),
+      this.populateBids(client),
+      this.populateGrade(client),
+      this.populateVouchers(client),
+    ]
+
+    await Promise.all(requests)
+    return this
   }
 
   async getValidators(client: LibraClient) {
