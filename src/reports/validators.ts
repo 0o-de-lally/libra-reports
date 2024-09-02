@@ -1,5 +1,5 @@
 import type { LibraClient } from "libra-ts-sdk"
-import { allVouchersPayload, currentValidatorsPayload, eligibleValidatorsPayload, vouchersInSetPayload } from "libra-ts-sdk/src/payloads/validators"
+import { allVouchersPayload, currentValidatorsPayload, eligibleValidatorsPayload, vouchersInSetPayload, vouchesGiven, vouchesReceived } from "libra-ts-sdk/src/payloads/validators"
 import { accountBalancePayload } from "libra-ts-sdk/src/payloads/common"
 import type { ValidatorAccount, ValidatorSet } from "../types/system"
 import fs from "fs"
@@ -96,14 +96,22 @@ export const updateBalance = async (client: LibraClient, profile: ValidatorAccou
 // get the vouches given and received for that validator
 export const updateVouchers = async (client: LibraClient, profile: ValidatorAccount): Promise<ValidatorAccount> => {
   const requests = [
-    client.postViewFunc(allVouchersPayload(profile.address)),
-    client.postViewFunc(vouchersInSetPayload(profile.address)),
+    client.postViewFunc(vouchesReceived(profile.address)),
+    client.postViewFunc(vouchesGiven(profile.address)),
+    client.postViewFunc(vouchersInSetPayload(profile.address))
   ]
 
-  const [buddies_res, buddies_in_set_res] = await Promise.all(requests)
+  const [vouchReceived, vouchGiven, buddies_in_set_res] = await Promise.all(requests)
 
   profile.active_vouchers = buddies_in_set_res[0]
-  profile.all_vouchers = buddies_res[0]
+  profile.vouches_received = {
+    addresses: vouchReceived[0],
+    expiration: vouchReceived[1]
+  }
+  profile.vouches_given = {
+    addresses: vouchGiven[0],
+    expiration: vouchGiven[1]
+  }
 
   return profile
 }

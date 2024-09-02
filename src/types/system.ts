@@ -56,11 +56,17 @@ export interface SlowWalletBalance {
   total: number
 }
 
+export interface VouchList {
+  addresses: string[],
+  expiration: number[],
+}
+
 export interface ValidatorAccount {
   address: string
   in_val_set?: boolean
-  active_vouchers?: string[] // Array of addresses
-  all_vouchers?: string[] // Array of addresses
+  active_vouchers?: string[],
+  vouches_received?: VouchList,
+  vouches_given?: VouchList,
   balance?: SlowWalletBalance
 }
 
