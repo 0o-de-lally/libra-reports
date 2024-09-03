@@ -1,3 +1,5 @@
+import type { PoFError } from "libra-ts-sdk/src/errors/pofError"
+
 export interface IndexData {
   chain_id: number
   epoch: string
@@ -78,6 +80,7 @@ export interface ValidatorAccount {
   bid_value?: number,
   bid_expires?: number,
   grade?: Grade,
+  qualification_errors?: PoFError[]
 }
 
 export interface ValidatorSet {

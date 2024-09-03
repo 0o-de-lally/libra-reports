@@ -1,6 +1,7 @@
 import type { LibraClient } from "libra-ts-sdk"
-import { currentValidatorsPayload, eligibleValidatorsPayload, validatorBidPayload, validatorGradePayload, vouchersInSetPayload, vouchesGiven, vouchesReceived } from "libra-ts-sdk/src/payloads/validators"
+import { currentValidatorsPayload, eligibleValidatorsPayload, getPoFErrors, validatorBidPayload, validatorGradePayload, vouchersInSetPayload, vouchesGiven, vouchesReceived } from "libra-ts-sdk/src/payloads/validators"
 import { accountBalancePayload } from "libra-ts-sdk/src/payloads/common"
+import { mapPoFErrors } from "libra-ts-sdk/src/errors/pofError"
 import type { ValidatorAccount, ValidatorSet } from "../types/system"
 import fs from "fs"
 import path from "path"
@@ -23,6 +24,7 @@ export class ReportValidator implements ValidatorSet {
       this.populateBids(client),
       this.populateGrade(client),
       this.populateVouchers(client),
+      this.populateErrors(client),
     ]
 
     await Promise.all(requests)
@@ -103,6 +105,15 @@ export class ReportValidator implements ValidatorSet {
     let requests: Promise<any>[] = []
     this.profiles.forEach((p) => {
       requests.push(updateGrade(client, p))
+    })
+
+    await Promise.all(requests)
+  }
+
+  async populateErrors(client: LibraClient) {
+    let requests: Promise<any>[] = []
+    this.profiles.forEach((p) => {
+      requests.push(updateErrors(client, p))
     })
 
     await Promise.all(requests)
@@ -193,8 +204,17 @@ export const updateGrade = async (client: LibraClient, profile: ValidatorAccount
       grade_failed: gradeResponse[2],
     }
   }
+  return profile
+}
 
+// get any errors regarding qualifying
+export const updateErrors = async (client: LibraClient, profile: ValidatorAccount): Promise<ValidatorAccount> => {
 
+  const res = await client.postViewFunc(getPoFErrors(profile.address));
+
+  if (res) {
+    profile.qualification_errors = mapPoFErrors(res[0])
+  }
   return profile
 }
 
