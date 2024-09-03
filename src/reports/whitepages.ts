@@ -27,16 +27,16 @@ export const WHITEPAGES = [
     handle: "veight"
   },
   {
-    address: "6ec6056a12fba4d82aa17f0a8005b5b8f044aef79519a60bf1769949a21caed",
-    handle: "unknown"
+    address: "06ec6056a12fba4d82aa17f0a8005b5b8f044aef79519a60bf1769949a21caed",
+    handle: "0xslipk"
   },
   {
     address: "86554d60d94378e32ee3ec053d8e32c3f1b37725a73a95f084381edfc1e76354",
-    handle: "unknown"
+    handle: "m0ot"
   },
   {
     address: "c80696fa9d3d161261246d3fdbfd982402856dfe22ffc571b80c3acc67c2bda4",
-    handle: "unknown"
+    handle: "0xslipk"
   },
   {
     address: "d19a9e5149ab0038f3563caf6b3e7063dca5bfe9dc37cb7f7194806ceaa4f5c4",
@@ -44,7 +44,7 @@ export const WHITEPAGES = [
   },
   {
     address: "e3d049469498319fe30b9aa3ac95d72be4c0f0eb8b436866e2e0b33334fc082a",
-    handle: "unknown"
+    handle: "Blackgrouse test not in use"
   },
   {
     address: "2023c65e5323feb2671eb690d5649ae3",
@@ -112,7 +112,7 @@ export const WHITEPAGES = [
   },
   {
     address: "abf767f204672cba607bc730acbc982872437d9d26c836a36f6c4f976bc59ca9",
-    handle: "m0ot"
+    handle: "Wuya - not in use"
   },
   {
     address: "52d79701968e2ab8d34ddd77ad11e87f",
@@ -200,7 +200,7 @@ export const WHITEPAGES = [
   },
   {
     address: "f2103cc8b36205aed79c8e5a441fc4e75af07d5e33325491f08a98f604b5fd78",
-    handle: "blackgrouse"
+    handle: "blackgrouse - test not in use"
   },
   {
     address: "754903132f75c0b1f5e5be29fb0ca6cd",
