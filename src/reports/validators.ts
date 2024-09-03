@@ -5,6 +5,7 @@ import type { ValidatorAccount, ValidatorSet } from "../types/system"
 import fs from "fs"
 import path from "path"
 import { lookup } from "./whitepages"
+import { isFunctionOrConstructorTypeNode } from "typescript"
 
 export class ReportValidator implements ValidatorSet {
   profiles: Map<string, ValidatorAccount>;
@@ -27,6 +28,23 @@ export class ReportValidator implements ValidatorSet {
 
     await Promise.all(requests)
     return this
+  }
+
+  toSortedArray = (propertyPath: string): ValidatorAccount[] => {
+    const sortedArray = Array.from(this.profiles.values()).sort((v1, v2) => {
+      console.log(v1)
+      if (v1.hasOwnProperty(propertyPath) && v2.hasOwnProperty(propertyPath)) {
+        // TODO: not sure why TS complains about indexing with string
+        const first = v1[propertyPath]
+        const second = v2[propertyPath]
+        console.log(first)
+        if (first < second) { return -1 }
+        if (first > second) { return 1 }
+        return 0
+      }
+      return 0
+    });
+    return sortedArray
   }
 
   async getValidators(client: LibraClient) {
@@ -61,7 +79,6 @@ export class ReportValidator implements ValidatorSet {
       requests.push(updateBalance(client, p))
     })
 
-    console.log(requests.length)
     await Promise.all(requests)
   }
 
@@ -71,7 +88,6 @@ export class ReportValidator implements ValidatorSet {
       requests.push(updateVouchers(client, p))
     })
 
-    console.log(requests.length)
     await Promise.all(requests)
   }
 
@@ -81,7 +97,6 @@ export class ReportValidator implements ValidatorSet {
       requests.push(updateBids(client, p))
     })
 
-    console.log(requests.length)
     await Promise.all(requests)
   }
 
@@ -91,7 +106,6 @@ export class ReportValidator implements ValidatorSet {
       requests.push(updateGrade(client, p))
     })
 
-    console.log(requests.length)
     await Promise.all(requests)
   }
 
@@ -125,8 +139,6 @@ export class ReportValidator implements ValidatorSet {
 // get the current balance of the validator
 export const updateBalance = async (client: LibraClient, profile: ValidatorAccount): Promise<ValidatorAccount> => {
   const bal_res = await client.postViewFunc(accountBalancePayload(profile.address))
-
-  console.log(bal_res);
 
   profile.balance = {
     unlocked: bal_res[0],
@@ -174,7 +186,7 @@ export const updateBids = async (client: LibraClient, profile: ValidatorAccount)
 export const updateGrade = async (client: LibraClient, profile: ValidatorAccount): Promise<ValidatorAccount> => {
 
   const gradeResponse = await client.postViewFunc(validatorGradePayload(profile.address));
-  console.log(gradeResponse)
+
   if (gradeResponse) {
     profile.grade = {
       grade_passing: gradeResponse[0],
@@ -216,7 +228,7 @@ export const readFromJson = (file: string): ReportValidator => {
 
   let str = fs.readFileSync(p).toString();
   let json: object = JSON.parse(str);
-  console.log(json);
+
   let vs = new ReportValidator()
 
   Object.entries(json).forEach(([k, v]) => {

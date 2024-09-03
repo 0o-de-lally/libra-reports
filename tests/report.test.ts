@@ -74,3 +74,22 @@ test("can lookup", () => {
   let res = lookup("0x6122b508960bbdbbf28f38bc035c393ecf7cff54c3ce8282c735940eedd807a");
   expect(res == "Qusuy")
 })
+
+test("can sort", () => {
+  const p = path.resolve("./tests/validators.fixture.json")
+  const pv = readFromJson(p)
+  pv.populateHandles()
+  let out = pv.toSortedArray("handle")
+  let o = out.map((a) => a.handle)
+  expect(o[0] == "0xslipk")
+  expect(o.pop() == "zoz")
+})
+
+test("can sort bids", () => {
+  const p = path.resolve("./tests/validators.fixture.json")
+  const pv = readFromJson(p)
+  pv.populateHandles()
+  let out = pv.toSortedArray("bid_value")
+  let o = out.map((a) => a.bid_value)
+  console.log(o)
+})
