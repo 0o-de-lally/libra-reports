@@ -5,7 +5,6 @@ import type { ValidatorAccount, ValidatorSet } from "../types/system"
 import fs from "fs"
 import path from "path"
 import { lookup } from "./whitepages"
-import { isFunctionOrConstructorTypeNode } from "typescript"
 
 export class ReportValidator implements ValidatorSet {
   profiles: Map<string, ValidatorAccount>;
@@ -32,12 +31,12 @@ export class ReportValidator implements ValidatorSet {
 
   toSortedArray = (propertyPath: string): ValidatorAccount[] => {
     const sortedArray = Array.from(this.profiles.values()).sort((v1, v2) => {
-      console.log(v1)
       if (v1.hasOwnProperty(propertyPath) && v2.hasOwnProperty(propertyPath)) {
         // TODO: not sure why TS complains about indexing with string
-        const first = v1[propertyPath]
-        const second = v2[propertyPath]
-        console.log(first)
+        // make sure we parse numbers
+        const first = parseInt(v1[propertyPath], 10) ?? v1[propertyPath]
+        const second = parseInt(v2[propertyPath], 10) ?? v2[propertyPath]
+
         if (first < second) { return -1 }
         if (first > second) { return 1 }
         return 0

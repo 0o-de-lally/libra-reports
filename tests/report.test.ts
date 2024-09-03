@@ -91,5 +91,5 @@ test("can sort bids", () => {
   pv.populateHandles()
   let out = pv.toSortedArray("bid_value")
   let o = out.map((a) => a.bid_value)
-  console.log(o)
+  expect(o.pop() == 1000)
 })
