@@ -83,6 +83,10 @@ export class ReportValidator implements ValidatorSet {
     await Promise.all(requests)
   }
 
+  getCurrentSet(): ValidatorAccount[] {
+    return this.toSortedArray("address").filter((e) => e.in_val_set)
+  }
+
   async populateVouchers(client: LibraClient) {
     let requests: Promise<any>[] = []
     this.profiles.forEach((p) => {
@@ -90,6 +94,23 @@ export class ReportValidator implements ValidatorSet {
     })
 
     await Promise.all(requests)
+
+    // now get the active and useful vouches
+    this.profiles.forEach((p) => {
+      p.active_vouchers = this.getActiveVouchers(p.address)
+    })
+
+
+  }
+
+  getActiveVouchers(validator: string): string[] {
+    let valSetAddrs = this.getCurrentSet().map(e => e.address)
+    let p = this.profiles.get(validator)
+    let filtered = p?.vouches_received?.addresses.filter(el => {
+      let idx = valSetAddrs.indexOf(el)
+      return idx > -1
+    })
+    return filtered ?? []
   }
 
   async populateBids(client: LibraClient) {
@@ -104,7 +125,9 @@ export class ReportValidator implements ValidatorSet {
   async populateGrade(client: LibraClient) {
     let requests: Promise<any>[] = []
     this.profiles.forEach((p) => {
-      requests.push(updateGrade(client, p))
+      if (p.in_val_set) {
+        requests.push(updateGrade(client, p))
+      }
     })
 
     await Promise.all(requests)

@@ -15,10 +15,12 @@ test("can populate validators", async () => {
   await pv.getValidators(client)
   await pv.populateBalances(client)
   await pv.populateVouchers(client)
+  await pv.populateGrade(client)
+  await pv.populateErrors(client)
 
-  const p = path.resolve(".")
+  const p = path.resolve("./validators.json")
   pv.saveToJson(p)
-})
+}, 15000)
 
 
 test("can read", async () => {
@@ -68,6 +70,14 @@ test("can populate handles", async () => {
   pv.populateHandles()
 
   console.log(pv);
+})
+
+test("can filter active vouches", async () => {
+  const p = path.resolve("./tests/validators.fixture.json")
+  const pv = readFromJson(p)
+  const val = '0x9a710919b1a1e67eda335269c0085c91'
+  const active = pv.getActiveVouchers(val)
+  expect(active.length > 0)
 })
 
 
