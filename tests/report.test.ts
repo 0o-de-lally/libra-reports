@@ -4,6 +4,7 @@ import { ReportValidator, readFromJson } from "../src/reports/validators";
 import { maybeInitClient } from "../src/makeClient";
 import path from "path";
 import { lookup } from "../src/reports/whitepages";
+import { vouchesReceived } from "libra-ts-sdk/src/payloads/validators";
 
 
 test("can populate validators", async () => {
@@ -92,4 +93,11 @@ test("can sort bids", () => {
   let out = pv.toSortedArray("bid_value")
   let o = out.map((a) => a.bid_value)
   expect(o.pop() == 1000)
+})
+
+
+test("can fetch vouches", async () => {
+  let client = await maybeInitClient()
+  let res = await client.postViewFunc(vouchesReceived('0x77f2650cd59335a8b03f875b43376f26'))
+  console.log(res)
 })
