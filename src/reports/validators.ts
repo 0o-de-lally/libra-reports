@@ -1,5 +1,5 @@
 import type { LibraClient } from "libra-ts-sdk"
-import { currentValidatorsPayload, eligibleValidatorsPayload, getPoFErrors, validatorBidPayload, validatorGradePayload, vouchesGiven, vouchesReceivedNotExpired } from "libra-ts-sdk/src/payloads/validators"
+import { currentValidatorsPayload, eligibleValidatorsPayload, getPoFErrors, validatorBidPayload, validatorGradePayload, vouchesGiven, vouchesReceivedNotExpired, vouchesReceivedValidNotFamily } from "libra-ts-sdk/src/payloads/validators"
 import { accountBalancePayload } from "libra-ts-sdk/src/payloads/common"
 import { mapPoFErrors } from "libra-ts-sdk/src/errors/pofError"
 import type { ValidatorAccount, ValidatorSet } from "../types/system"
@@ -106,7 +106,7 @@ export class ReportValidator implements ValidatorSet {
   getActiveVouchers(validator: string): string[] {
     let valSetAddrs = this.getCurrentSet().map(e => e.address)
     let p = this.profiles.get(validator)
-    let filtered = p?.vouches_received?.addresses.filter(el => {
+    let filtered = p?.vouches_received_not_family?.addresses.filter(el => {
       let idx = valSetAddrs.indexOf(el)
       return idx > -1
     })
@@ -186,17 +186,24 @@ export const updateVouchers = async (client: LibraClient, profile: ValidatorAcco
   const requests = [
     client.postViewFunc(vouchesReceivedNotExpired(profile.address)),
     client.postViewFunc(vouchesGiven(profile.address)),
+    client.postViewFunc(vouchesReceivedValidNotFamily(profile.address)),
   ]
 
-  const [vouchReceived, vouchGiven] = await Promise.all(requests)
+  const [vouchReceived, vouchGiven, receivedNotFamily] = await Promise.all(requests)
 
   profile.vouches_received = {
     addresses: vouchReceived[0],
     expiration: vouchReceived[1]
   }
+
   profile.vouches_given = {
     addresses: vouchGiven[0],
     expiration: vouchGiven[1]
+  }
+
+  profile.vouches_received_not_family = {
+    addresses: receivedNotFamily[0],
+    expiration: [] // has no expiration info
   }
 
   return profile

@@ -75,6 +75,7 @@ export interface ValidatorAccount {
   in_val_set?: boolean,
   active_vouchers?: string[],
   vouches_received?: VouchList,
+  vouches_received_not_family?: VouchList,
   vouches_given?: VouchList,
   balance?: SlowWalletBalance,
   bid_value?: number,
